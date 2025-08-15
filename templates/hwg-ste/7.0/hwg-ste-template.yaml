@@ -1,0 +1,92 @@
+zabbix_export:
+  version: '7.4'
+  template_groups:
+    - uuid: 3de1fe18ccf04892af640c525c8ad724
+      name: 'Ethernet thermometer'
+  templates:
+    - uuid: 9a3a96a4dd7547e69f7e471c37c22d76
+      template: HWg-STE
+      name: HWg-STE
+      description: |
+        ## Overview
+        
+        Monitoring humidity and temperature
+      
+        
+        
+        ## Author
+        
+        Anton Petrov
+      groups:
+        - name: 'Ethernet thermometer'
+      items:
+        - uuid: 71ef00c4f58f430f8dd1349310707c10
+          name: 'Temperature [Sensor 215]'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.21796.4.1.3.1.5.1
+          key: .3.1.5.1
+          value_type: FLOAT
+          units: C
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '0.1'
+          triggers:
+            - uuid: 7eba0f2c43a244f38c30ff1c4bdd73e1
+              expression: last(/HWg-STE/.3.1.5.1)>30
+              name: 'Critical temperature (> 33°C)'
+              priority: HIGH
+            - uuid: 53cc76976d064463b73b1fc66b8800cc
+              expression: last(/HWg-STE/.3.1.5.1)>26
+              name: 'Temperature exceeded (> 26°C)'
+              priority: AVERAGE
+            - uuid: 8546a9db47d04d7b83e68d7d91c9dbac
+              expression: last(/HWg-STE/.3.1.5.1)>23
+              name: 'Temperature reached (> 23°C)'
+              priority: INFO
+            - uuid: b929b16a799f44a9bd080e760e8ca469
+              expression: last(/HWg-STE/.3.1.5.1)<14
+              name: 'Temperature too low (<14°C)'
+              priority: WARNING
+        - uuid: 89fe302336cf4995aa4f472c7c64c4b1
+          name: 'Humidity [Sensor 216]'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.21796.4.1.3.1.5.2
+          key: .3.1.5.2
+          value_type: FLOAT
+          units: RH
+          preprocessing:
+            - type: MULTIPLIER
+              parameters:
+                - '0.1'
+          triggers:
+            - uuid: 1ee16f4035624966a2fca989abfeb922
+              expression: last(/HWg-STE/.3.1.5.2)<35
+              name: 'a bit dry (Humidity < 35%RH)'
+              priority: WARNING
+            - uuid: 4ca3e95aab224c438045db25ca8cbb73
+              expression: last(/HWg-STE/.3.1.5.2)>55
+              name: 'a bit humid (Humidity > 55%RH)'
+              priority: WARNING
+      macros:
+        - macro: '{$SENSORID}'
+          value: '>=1'
+  graphs:
+    - uuid: e95fd9e746ae441cadc29144c35a853d
+      name: 'Humidity [Sensor 216]'
+      yaxismax: '0'
+      graph_items:
+        - color: 199C0D
+          calc_fnc: ALL
+          item:
+            host: HWg-STE
+            key: .3.1.5.2
+    - uuid: b65ff388ef9b42608bdd4a72b9bab812
+      name: 'Temperature [Sensor 215]'
+      yaxismax: '0'
+      graph_items:
+        - color: 199C0D
+          calc_fnc: ALL
+          item:
+            host: HWg-STE
+            key: .3.1.5.1
